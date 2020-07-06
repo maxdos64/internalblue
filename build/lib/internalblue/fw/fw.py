@@ -28,13 +28,10 @@ from builtins import object
 from types import ModuleType
 from typing import List
 
-class log():
-    @staticmethod
-    def info(*s):
-        print(s)
 
 from internalblue import Address
-from internalblue.utils.internalblue_logger import getInternalBlueLogger
+from pwn import log
+
 
 class MemorySection(object):
     """
@@ -116,12 +113,9 @@ class Firmware(object):
 
         self.version = version
 
-        # get and store 'InternalBlue' logger
-        logger = getInternalBlueLogger()
-
         if version:
             # get LMP Subversion
-            logger.info(
+            log.info(
                 "Chip identifier: 0x%04x (%03d.%03d.%03d)"
                 % (version, version >> 13, (version & 0xF00) >> 8, version & 0xFF)
             )
@@ -134,12 +128,12 @@ class Firmware(object):
                             __name__ + "_" + hex(version) + "_iphone", fromlist=[""]
                         )
                     )
-                    logger.info("Using fw_" + hex(version) + "_iphone.py")
+                    log.info("Using fw_" + hex(version) + "_iphone.py")
                 else:
                     self.firmware = self._module_to_firmware_definition(
                         __import__(__name__ + "_" + hex(version), fromlist=[""])
                     )
-                    logger.info("Using fw_" + hex(version) + ".py")
+                    log.info("Using fw_" + hex(version) + ".py")
             except ImportError:
                 self.firmware = None
                 pass
@@ -149,7 +143,7 @@ class Firmware(object):
                 __import__(__name__ + "_default", fromlist=[""])
             )
 
-        logger.info("Loaded firmware information for " + self.firmware.FW_NAME + ".")
+        log.info("Loaded firmware information for " + self.firmware.FW_NAME + ".")
 
     def _module_to_firmware_definition(self, fw: ModuleType) -> FirmwareDefinition:
         """
@@ -163,7 +157,7 @@ class Firmware(object):
             for name, cls in fw.__dict__.items()
             if isinstance(cls, type)
             and issubclass(cls, FirmwareDefinition)
-            and cls is not FirmwareDefinition
+            and not cls is FirmwareDefinition
         }
 
         if len(_types) == 1:
