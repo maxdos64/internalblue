@@ -19,19 +19,8 @@ from pwnlib.context import context
 # pwnlib.log.install_default_handler()
 # log = pwnlib.log.getLogger('internalbue')
 
-class log():
-    @staticmethod
-    def info(*s):
-        pass
-        # print(s)
-    def debug(*s):
-        pass
-        #print(s)
-    def critical(*s):
-        print(s)
-    def warn(*s):
-        print(s)
-        # print(s)
+from pwn import log
+
 
 from pwnlib.term import text
 from pwnlib.ui import options, yesno

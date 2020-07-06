@@ -28,12 +28,10 @@ from builtins import object
 from types import ModuleType
 from typing import List
 
-class log():
-    @staticmethod
-    def info(*s):
-        print(s)
 
 from internalblue import Address
+from pwn import log
+
 
 class MemorySection(object):
     """
