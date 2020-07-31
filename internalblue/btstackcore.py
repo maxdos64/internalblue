@@ -30,7 +30,7 @@ class Injector():
         """ Call it with msg being a valid HCI message to talk to BTstack Daemon """
         packet_type = msg[0]
         msg = msg[1:]
-        channel = 0
+        channel = 1
         length = len(msg)
         header = struct.pack("<HHH", packet_type, channel, length)
         self.socket.sendall(header + msg)
@@ -123,9 +123,9 @@ class BTstackCore(InternalBlue):
                 header = self.s_snoop.recv(6)
                 (packet_type, channel, length) = struct.unpack("<HHH", header)
                 record_data = self.s_snoop.recv(length)
-                record_data = bytearray(record_data)
+                assert length == len(record_data) and length > 0
                 # Repackage so the rest of internalblue can handle the packet (packet type followed by payload)
-                record_data = packet_type.to_bytes(1, 'little') + record_data
+                record_data = packet_type.to_bytes(1, 'little') + bytearray(record_data)
             except socket.timeout:
                 continue  # this is ok. just try again without error
             except Exception as e:

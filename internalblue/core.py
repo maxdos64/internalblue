@@ -329,7 +329,7 @@ class InternalBlue(with_metaclass(ABCMeta, object)):
                 #
                 # ...and that's how the data is formatted already anyway
 
-            elif self.__class__.__name__ == "HCICore":
+            elif self.__class__.__name__ == "HCICore" or self.__class__.__name__ == "BTstackCore":
                 if self.write_btsnooplog:
                     # btsnoop record header data:
                     btsnoop_data = p8(h4type) + data
