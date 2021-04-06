@@ -1329,7 +1329,6 @@ class InternalBlue(with_metaclass(ABCMeta, object)):
 
         Returns True on success and False on failure.
         """
-
         # Check if constants are defined in fw.py
         for const in [
             "PATCHRAM_TARGET_TABLE_ADDRESS",
@@ -1372,6 +1371,7 @@ class InternalBlue(with_metaclass(ABCMeta, object)):
             return True
 
         table_addresses, table_values, table_slots = self.getPatchramState()
+        old_table_addresses = table_addresses
 
         # Check whether the address is already patched:
         for i in range(self.fw.PATCHRAM_NUMBER_OF_SLOTS):
@@ -1438,6 +1438,15 @@ class InternalBlue(with_metaclass(ABCMeta, object)):
                     "disableRomPatch: '%s' not in fw.py. FEATURE NOT SUPPORTED!" % const
                 )
                 return False
+
+        # In the case we had to split the patch for applying it -> we have to remove two patches
+        alignment = address % 4
+        if slot is None and alignment != 0:
+            log.debug("disableRomPatch: Address 0x%x is not 4-byte aligned!" % address)
+            log.debug("disableRomPatch: Removing patch in two rounds")
+            self.disableRomPatch(address - alignment)
+            self.disableRomPatch(address - alignment + 4)
+            return True
 
         table_addresses, table_values, table_slots = self.getPatchramState()
 

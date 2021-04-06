@@ -1436,15 +1436,18 @@ class InternalBlue(with_metaclass(ABCMeta, object)):
 
         table_addresses, table_values, table_slots = self.getPatchramState()
 
+        print("A\n"*20)
         if slot is None:
             if address is None:
                 log.warn("disableRomPatch: address is None.")
                 return False
             for i in range(self.fw.PATCHRAM_NUMBER_OF_SLOTS):
+                log.info("Slot for address 0x%x used by %d\n" % table_addresses[i], slot))
                 if table_addresses[i] == address:
                     slot = i
                     log.info("Slot for address 0x%x is: %d" % (address, slot))
                     break
+            log.info("AAAAAAAAAAAAA")
             if slot is None:
                 log.warn("No slot contains address: 0x%x" % address)
                 return False
