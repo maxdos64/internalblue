@@ -728,8 +728,9 @@ class InternalBlue(with_metaclass(ABCMeta, object)):
 
         # Safe to turn diagnostic logging on, it just gets a timeout if the Android
         # driver was recompiled with other flags but without applying a proper patch.
-        log.info("Try to enable debugging on H4 (warning if not supported)...")
-        self.enableBroadcomDiagnosticLogging(True)
+        # Only if we need LMP and LCP messages from the controller
+        # log.info("Try to enable debugging on H4 (warning if not supported)...")
+        # self.enableBroadcomDiagnosticLogging(True)
 
         return True
 
@@ -1324,7 +1325,6 @@ class InternalBlue(with_metaclass(ABCMeta, object)):
 
         Returns True on success and False on failure.
         """
-
         # Check if constants are defined in fw.py
         for const in [
             "PATCHRAM_TARGET_TABLE_ADDRESS",
@@ -1367,6 +1367,7 @@ class InternalBlue(with_metaclass(ABCMeta, object)):
             return True
 
         table_addresses, table_values, table_slots = self.getPatchramState()
+        old_table_addresses = table_addresses
 
         # Check whether the address is already patched:
         for i in range(self.fw.PATCHRAM_NUMBER_OF_SLOTS):
@@ -1434,6 +1435,15 @@ class InternalBlue(with_metaclass(ABCMeta, object)):
                 )
                 return False
 
+        # In the case we had to split the patch for applying it -> we have to remove two patches
+        alignment = address % 4
+        if slot is None and alignment != 0:
+            log.debug("disableRomPatch: Address 0x%x is not 4-byte aligned!" % address)
+            log.debug("disableRomPatch: Removing patch in two rounds")
+            self.disableRomPatch(address - alignment)
+            self.disableRomPatch(address - alignment + 4)
+            return True
+
         table_addresses, table_values, table_slots = self.getPatchramState()
 
         if slot is None:
@@ -1443,7 +1453,6 @@ class InternalBlue(with_metaclass(ABCMeta, object)):
             for i in range(self.fw.PATCHRAM_NUMBER_OF_SLOTS):
                 if table_addresses[i] == address:
                     slot = i
-                    log.info("Slot for address 0x%x is: %d" % (address, slot))
                     break
             if slot is None:
                 log.warn("No slot contains address: 0x%x" % address)

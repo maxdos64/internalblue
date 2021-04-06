@@ -27,11 +27,8 @@ from builtins import hex
 from builtins import object
 from types import ModuleType
 from typing import List
+from pwn import *
 
-class log():
-    @staticmethod
-    def info(*s):
-        print(s)
 
 from internalblue import Address
 
