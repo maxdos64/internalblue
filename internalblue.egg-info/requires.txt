@@ -1,9 +1,0 @@
-pwntools>=4.0.1
-pyelftools
-future
-
-[ipython]
-IPython
-
-[macoscore]
-pyobjc

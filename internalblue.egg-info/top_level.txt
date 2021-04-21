@@ -1,4 +1,0 @@
-internalblue
-internalblue/fw
-internalblue/objects
-internalblue/utils
