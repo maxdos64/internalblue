@@ -1442,8 +1442,8 @@ class InternalBlue(with_metaclass(ABCMeta, object)):
         # In the case we had to split the patch for applying it -> we have to remove two patches
         alignment = address % 4
         if slot is None and alignment != 0:
-            log.debug("disableRomPatch: Address 0x%x is not 4-byte aligned!" % address)
-            log.debug("disableRomPatch: Removing patch in two rounds")
+            self.logger.debug("disableRomPatch: Address 0x%x is not 4-byte aligned!" % address)
+            self.logger.debug("disableRomPatch: Removing patch in two rounds")
             self.disableRomPatch(address - alignment)
             self.disableRomPatch(address - alignment + 4)
             return True
