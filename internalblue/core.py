@@ -732,8 +732,8 @@ class InternalBlue(with_metaclass(ABCMeta, object)):
 
         # Safe to turn diagnostic logging on, it just gets a timeout if the Android
         # driver was recompiled with other flags but without applying a proper patch.
-        self.logger.info("Try to enable debugging on H4 (warning if not supported)...")
-        self.enableBroadcomDiagnosticLogging(True)
+        #self.logger.info("Try to enable debugging on H4 (warning if not supported)...")
+        #self.enableBroadcomDiagnosticLogging(True)
 
         return True
 

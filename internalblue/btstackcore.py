@@ -12,12 +12,36 @@ from builtins import str
 from builtins import zip
 from builtins import range
 import datetime
-from internalblue.utils.pwnlib_wrapper import log, context, p32, u16, p16, u32
+from .utils.packing import p8, p16, u16, p32, u32, bits, unbits
 import fcntl
 from .core import InternalBlue
 from . import hci
 import queue as queue2k
 import threading
+
+try:
+    import pwnlib
+    from pwnlib import context
+    from pwnlib.asm import disasm, asm
+    from pwnlib.exception import PwnlibException
+    context.context.arch = 'thumb'
+except ImportError:
+    pwnlib = context = disasm = asm = PwnlibException = None
+    _has_pwnlib = False
+    import warnings
+    warnings.formatwarning = (lambda x, *args, **kwargs: f"\x1b[31m[!] {x}\x1b[0m\n")
+    warnings.warn("pwnlib is not installed. Some features will not work.")
+else:
+    _has_pwnlib = True
+
+
+def needs_pwnlib(func):
+    def inner(*args, **kwargs):
+        if not _has_pwnlib:
+            raise ImportError("pwnlib is required for this function.")
+        return func(*args, **kwargs)
+
+    return inner
 
 
 class Injector():
@@ -42,18 +66,16 @@ class BTstackCore(InternalBlue):
     """ Manages interaction with a BTstack Daemon """
     def __init__(
         self,
-        queue_size=1000,
-        btsnooplog_filename="btsnoop.log",
-        log_level="info",
-        fix_binutils="True",
-        data_directory=".",
-        replay=False,
+        queue_size: int = 1000,
+        btsnooplog_filename: str = "btsnoop.log",
+        log_level: str = "info",
+        data_directory: str = ".",
+        replay: bool = False,
     ):
         super(BTstackCore, self).__init__(
             queue_size,
             btsnooplog_filename,
             log_level,
-            fix_binutils,
             data_directory,
             replay,
         )
@@ -65,15 +87,15 @@ class BTstackCore(InternalBlue):
         """
         """
         if not self.host:
-            log.warn("No BTstack daemon host defined")
+            self.logger.warning("No BTstack daemon host defined")
             return False
 
         if not self.port:
-            log.warn("No BTstack daemon port defined")
+            self.logger.warning("No BTstack daemon port defined")
             return False
 
         if not self._setupSockets():
-            log.critical("BTstack socket could not be established!")
+            self.logger.critical("BTstack socket could not be established!")
             return False
 
         return True
@@ -112,7 +134,7 @@ class BTstackCore(InternalBlue):
         if it encounters a fatal error or the stackDumpReceiver reports that the chip crashed.
         """
 
-        log.debug("Receive Thread started.")
+        self.logger.debug("Receive Thread started.")
 
         while not self.exit_requested:
             # Little bit ugly: need to re-apply changes to the global context to the thread-copy
@@ -129,7 +151,7 @@ class BTstackCore(InternalBlue):
             except socket.timeout:
                 continue  # this is ok. just try again without error
             except Exception as e:
-                log.critical(
+                self.logger.critical(
                     "Lost device interface with exception {}, terminating receive thread...".format(
                         e
                     )
@@ -157,7 +179,7 @@ class BTstackCore(InternalBlue):
                 btsnoop_time,
             )
 
-            log.debug(
+            self.logger.debug(
                 "_recvThreadFunc Recv: [" + str(btsnoop_time) + "] " + str(record[0])
             )
 
@@ -183,7 +205,7 @@ class BTstackCore(InternalBlue):
                     try:
                         queue.put(record, block=False)
                     except queue2k.Full:
-                        log.warn(
+                        self.logger.warning(
                             "recvThreadFunc: A recv queue is full. dropping packets.."
                         )
 
@@ -195,10 +217,10 @@ class BTstackCore(InternalBlue):
             # Check if the stackDumpReceiver has noticed that the chip crashed.
             # if self.stackDumpReceiver.stack_dump_has_happend:
             # A stack dump has happend!
-            # log.warn("recvThreadFunc: The controller send a stack dump.")
+            # self.logger.warning("recvThreadFunc: The controller send a stack dump.")
             # self.exit_requested = True
 
-        log.debug("Receive Thread terminated.")
+        self.logger.debug("Receive Thread terminated.")
 
     def configure_sockets(self, host, port):
         self.host = host
@@ -211,7 +233,7 @@ class BTstackCore(InternalBlue):
         self.s_snoop.settimeout(2)
         self.s_snoop.connect((self.host, self.port))
 
-        log.debug("_setupSockets: Bound socket.")
+        self.logger.debug("_setupSockets: Bound socket.")
 
         # same socket for input and output (this is different from adb here!)
         self.s_inject = Injector(self.s_snoop)
